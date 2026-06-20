@@ -44,7 +44,7 @@
                                 <td>@request.ClientName</td>
                                 <td>@request.ContractTitle</td>
                                 <td>$@request.AmountUSD.ToString("N2")</td>
-                                <td>R@request.AmountZAR.ToString("N2")</td>
+                                <td>R@(request.AmountZAR.ToString("N2"))</td>
                                 <td>@request.ExchangeRate.ToString("F2")</td>
                                 <td>
                                     <span class="status-badge status-@request.Status">

@@ -124,7 +124,7 @@
                                 <tr>
                                     <td>@request.Title</td>
                                     <td>$@request.AmountUSD.ToString("N2")</td>
-                                    <td>R@request.AmountZAR.ToString("N2")</td>
+                                    <td>R@(request.AmountZAR.ToString("N2"))</td>
                                     <td><span class="status-badge status-@request.Status rounded-pill">@request.Status</span></td>
                                     <td>@request.RequestDate.ToString("yyyy-MM-dd")</td>
                                     <td><a href="/ServiceRequests/Details/@request.Id" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-eye"></i> View</a></td>
