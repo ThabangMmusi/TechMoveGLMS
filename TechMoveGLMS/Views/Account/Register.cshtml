@@ -1,0 +1,238 @@
+﻿@model TechMoveGLMS.Models.RegisterViewModel
+@{
+    ViewData["Title"] = "Register";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - TechMove Logistics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Inter', sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+
+            .register-container {
+                width: 100%;
+                max-width: 500px;
+            }
+
+            .register-card {
+                background: white;
+                border-radius: 24px;
+                padding: 40px;
+                box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            }
+
+            .logo {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+
+                .logo i {
+                    font-size: 48px;
+                    color: #667eea;
+                }
+
+                .logo h2 {
+                    font-size: 24px;
+                    color: #1a1a2e;
+                    margin-top: 10px;
+                }
+
+                .logo p {
+                    color: #666;
+                    font-size: 14px;
+                    margin-top: 5px;
+                }
+
+            .form-group {
+                margin-bottom: 20px;
+            }
+
+                .form-group label {
+                    display: block;
+                    margin-bottom: 8px;
+                    font-weight: 500;
+                    color: #333;
+                    font-size: 14px;
+                }
+
+            .input-group {
+                position: relative;
+            }
+
+                .input-group i {
+                    position: absolute;
+                    left: 15px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    color: #999;
+                }
+
+            .form-control {
+                width: 100%;
+                padding: 12px 15px 12px 45px;
+                border: 1px solid #e0e0e0;
+                border-radius: 12px;
+                font-size: 14px;
+                transition: all 0.3s;
+            }
+
+                .form-control:focus {
+                    outline: none;
+                    border-color: #667eea;
+                    box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+                }
+
+            .btn-register {
+                width: 100%;
+                padding: 14px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border: none;
+                border-radius: 12px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: transform 0.2s;
+            }
+
+                .btn-register:hover {
+                    transform: translateY(-2px);
+                }
+
+            .login-link {
+                text-align: center;
+                margin-top: 20px;
+                font-size: 14px;
+                color: #666;
+            }
+
+                .login-link a {
+                    color: #667eea;
+                    text-decoration: none;
+                    font-weight: 500;
+                }
+
+                    .login-link a:hover {
+                        text-decoration: underline;
+                    }
+
+            .alert {
+                padding: 12px;
+                border-radius: 12px;
+                margin-bottom: 20px;
+                font-size: 14px;
+            }
+
+            .alert-danger {
+                background: #fee2e2;
+                color: #dc2626;
+                border: 1px solid #fecaca;
+            }
+
+            .text-danger {
+                color: #dc2626;
+                font-size: 12px;
+            }
+
+            .password-requirements {
+                font-size: 11px;
+                color: #999;
+                margin-top: 5px;
+            }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-card">
+            <div class="logo">
+                <i class="fas fa-truck-moving"></i>
+                <h2>Create Account</h2>
+                <p>Join TechMove Logistics</p>
+            </div>
+
+            @if (!ViewData.ModelState.IsValid && ViewData.ModelState.ErrorCount > 0)
+            {
+                <div class="alert alert-danger">
+                    @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                    {
+                        <div><i class="fas fa-exclamation-circle"></i> @error.ErrorMessage</div>
+                    }
+                </div>
+            }
+
+            <form asp-action="Register" method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="form-group">
+                    <label asp-for="FullName">Full Name</label>
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        <input asp-for="FullName" class="form-control" placeholder="Enter your full name" autofocus />
+                    </div>
+                    <span asp-validation-for="FullName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Email">Email Address</label>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input asp-for="Email" class="form-control" placeholder="Enter your email" />
+                    </div>
+                    <span asp-validation-for="Email" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Password">Password</label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input asp-for="Password" type="password" class="form-control" placeholder="Create a password (min 6 characters)" />
+                    </div>
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                    <div class="password-requirements">Password must be at least 6 characters</div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="ConfirmPassword">Confirm Password</label>
+                    <div class="input-group">
+                        <i class="fas fa-check-circle"></i>
+                        <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Confirm your password" />
+                    </div>
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn-register">
+                    <i class="fas fa-user-plus"></i> Register
+                </button>
+
+                <div class="login-link">
+                    Already have an account? <a href="/Account/Login">Login here</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.5/jquery.validate.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/4.0.0/jquery.validate.unobtrusive.min.js"></script>
+</body>
+</html>

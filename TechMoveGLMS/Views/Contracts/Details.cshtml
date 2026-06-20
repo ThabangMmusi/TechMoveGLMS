@@ -1,0 +1,142 @@
+﻿@model TechMoveGLMS.Models.Contract
+@using TechMoveGLMS.Models
+@{
+    ViewData["Title"] = "Contract Details";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0 fw-bold"><i class="fas fa-file-contract text-primary"></i> @Model.Title</h2>
+            <p class="text-muted mt-2">Contract ID: #@Model.Id | Created: @Model.CreatedAt.ToString("MMMM dd, yyyy")</p>
+        </div>
+        <a href="/Contracts" class="btn btn-outline-secondary rounded-pill px-4"><i class="fas fa-arrow-left me-2"></i>Back to List</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h5 class="mb-0 fw-semibold"><i class="fas fa-info-circle me-2 text-primary"></i>Contract Information</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Contract Title</label>
+                            <p class="fw-medium mb-0">@Model.Title</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Service Level</label>
+                            <p class="mb-0"><span class="badge bg-secondary bg-opacity-10 text-dark rounded-pill px-3 py-2">@Model.ServiceLevel</span></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Start Date</label>
+                            <p class="mb-0">@Model.StartDate.ToString("MMMM dd, yyyy")</p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">End Date</label>
+                            <p class="mb-0">
+                                @Model.EndDate.ToString("MMMM dd, yyyy")
+                                @if (Model.IsExpired)
+                                {
+                                    <span class="badge bg-danger ms-2 rounded-pill">Expired</span>
+                                }
+                                else if (Model.IsExpiringSoon)
+                                {
+                                    <span class="badge bg-warning ms-2 rounded-pill">Expiring in @Model.DaysRemaining days</span>
+                                }
+                            </p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Status</label>
+                            <p class="mb-0"><span class="status-badge status-@Model.Status rounded-pill">@Model.Status</span></p>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="text-muted small">Client</label>
+                            <p class="mb-0">@Model.Client?.Name</p>
+                            <p class="mb-0"><small>@Model.Client?.Email</small></p>
+                            <p class="mb-0"><small>@Model.Client?.Phone</small></p>
+                        </div>
+                        <div class="col-12 mb-3">
+                            <label class="text-muted small">Description</label>
+                            <p class="mb-0">@Model.Description</p>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrEmpty(Model.SignedAgreementFileName))
+                    {
+                        <div class="alert alert-success rounded-3 mt-3">
+                            <i class="fas fa-file-pdf me-2"></i> Signed Agreement: @Model.SignedAgreementFileName
+                            <a href="/Contracts/DownloadFile/@Model.Id" class="btn btn-sm btn-success ms-3 rounded-pill"><i class="fas fa-download me-1"></i>Download PDF</a>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow-sm border-0 rounded-4 mb-4">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h5 class="mb-0 fw-semibold"><i class="fas fa-sync-alt me-2 text-primary"></i>Update Status</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="UpdateStatus" asp-controller="Contracts" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <select name="status" class="form-select rounded-3 mb-3">
+                            @foreach (ContractStatus status in Enum.GetValues(typeof(ContractStatus)))
+                            {
+                                <option value="@status" selected="@(Model.Status == status)">@status</option>
+                            }
+                        </select>
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill"><i class="fas fa-save me-2"></i>Update Status</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-header bg-transparent border-0 pt-4 px-4">
+            <h5 class="mb-0 fw-semibold"><i class="fas fa-clipboard-list me-2 text-primary"></i>Service Requests</h5>
+        </div>
+        <div class="card-body p-4">
+            @if (!Model.ServiceRequests.Any())
+            {
+                <p class="text-muted text-center py-3">No service requests for this contract.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Title</th>
+                                <th>Amount (USD)</th>
+                                <th>Amount (ZAR)</th>
+                                <th>Status</th>
+                                <th>Request Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var request in Model.ServiceRequests.OrderByDescending(r => r.RequestDate))
+                            {
+                                <tr>
+                                    <td>@request.Title</td>
+                                    <td>$@request.AmountUSD.ToString("N2")</td>
+                                    <td>R@request.AmountZAR.ToString("N2")</td>
+                                    <td><span class="status-badge status-@request.Status rounded-pill">@request.Status</span></td>
+                                    <td>@request.RequestDate.ToString("yyyy-MM-dd")</td>
+                                    <td><a href="/ServiceRequests/Details/@request.Id" class="btn btn-sm btn-outline-primary rounded-pill"><i class="fas fa-eye"></i> View</a></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            <div class="mt-3">
+                <a href="/ServiceRequests/Create" class="btn btn-outline-success rounded-pill px-4"><i class="fas fa-plus me-2"></i>New Service Request</a>
+            </div>
+        </div>
+    </div>
+</div>

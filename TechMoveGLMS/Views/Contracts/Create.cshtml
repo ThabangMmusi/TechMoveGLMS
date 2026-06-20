@@ -1,0 +1,115 @@
+﻿@model TechMoveGLMS.ViewModels.CreateContractViewModel
+@using TechMoveGLMS.Models
+@{
+    ViewData["Title"] = "Create Contract";
+}
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-0 fw-bold"><i class="fas fa-plus-circle text-primary"></i> Create New Contract</h2>
+            <p class="text-muted mt-2">Create a new client contract with PDF agreement upload</p>
+        </div>
+        <a href="/Contracts" class="btn btn-outline-secondary rounded-pill px-4"><i class="fas fa-arrow-left me-2"></i>Back to List</a>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger rounded-3"></div>
+
+                <h5 class="mb-3 fw-semibold text-primary">Contract Information</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Title" class="form-label fw-medium">Contract Title <span class="text-danger">*</span></label>
+                        <input asp-for="Title" class="form-control rounded-3" placeholder="Enter contract title" />
+                        <span asp-validation-for="Title" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ServiceLevel" class="form-label fw-medium">Service Level <span class="text-danger">*</span></label>
+                        <select asp-for="ServiceLevel" class="form-select rounded-3">
+                            <option value="">Select Service Level</option>
+                            <option value="Basic">Basic</option>
+                            <option value="Standard">Standard</option>
+                            <option value="Premium">Premium</option>
+                            <option value="Express">Express</option>
+                            <option value="Enterprise">Enterprise</option>
+                        </select>
+                        <span asp-validation-for="ServiceLevel" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="StartDate" class="form-label fw-medium">Start Date <span class="text-danger">*</span></label>
+                        <input asp-for="StartDate" type="date" class="form-control rounded-3" />
+                        <span asp-validation-for="StartDate" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="EndDate" class="form-label fw-medium">End Date <span class="text-danger">*</span></label>
+                        <input asp-for="EndDate" type="date" class="form-control rounded-3" />
+                        <span asp-validation-for="EndDate" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Status" class="form-label fw-medium">Contract Status <span class="text-danger">*</span></label>
+                        <select asp-for="Status" class="form-select rounded-3" asp-items="Html.GetEnumSelectList<ContractStatus>()"></select>
+                        <span asp-validation-for="Status" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label asp-for="Description" class="form-label fw-medium">Description</label>
+                        <textarea asp-for="Description" rows="3" class="form-control rounded-3" placeholder="Enter contract details..."></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <h5 class="mb-3 mt-4 fw-semibold text-primary">Client Information</h5>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ClientName" class="form-label fw-medium">Client Name <span class="text-danger">*</span></label>
+                        <input asp-for="ClientName" class="form-control rounded-3" placeholder="Enter client name" />
+                        <span asp-validation-for="ClientName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ClientEmail" class="form-label fw-medium">Client Email <span class="text-danger">*</span></label>
+                        <input asp-for="ClientEmail" class="form-control rounded-3" placeholder="client@example.com" type="email" />
+                        <span asp-validation-for="ClientEmail" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ClientPhone" class="form-label fw-medium">Client Phone <span class="text-danger">*</span></label>
+                        <input asp-for="ClientPhone" class="form-control rounded-3" placeholder="+1-555-123-4567" />
+                        <span asp-validation-for="ClientPhone" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ClientRegion" class="form-label fw-medium">Client Region <span class="text-danger">*</span></label>
+                        <input asp-for="ClientRegion" class="form-control rounded-3" placeholder="North America, Europe, Asia, etc." />
+                        <span asp-validation-for="ClientRegion" class="text-danger small"></span>
+                    </div>
+                    <div class="col-12 mb-3">
+                        <label asp-for="ClientAddress" class="form-label fw-medium">Client Address <span class="text-danger">*</span></label>
+                        <textarea asp-for="ClientAddress" rows="2" class="form-control rounded-3" placeholder="Enter full address"></textarea>
+                        <span asp-validation-for="ClientAddress" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <h5 class="mb-3 mt-4 fw-semibold text-primary">Signed Agreement (PDF)</h5>
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <label asp-for="SignedAgreement" class="form-label fw-medium">Upload Signed Agreement</label>
+                        <input asp-for="SignedAgreement" type="file" class="form-control rounded-3" accept=".pdf" />
+                        <small class="text-muted">Only PDF files are accepted. Maximum file size: 10MB.</small>
+                        <span asp-validation-for="SignedAgreement" class="text-danger small"></span>
+                    </div>
+                </div>
+
+                <hr class="my-4" />
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4"><i class="fas fa-save me-2"></i>Create Contract</button>
+                    <a href="/Contracts" class="btn btn-outline-secondary rounded-pill px-4"><i class="fas fa-times me-2"></i>Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

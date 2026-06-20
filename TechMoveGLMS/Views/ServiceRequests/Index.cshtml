@@ -1,0 +1,67 @@
+﻿@model IEnumerable<TechMoveGLMS.ViewModels.ServiceRequestViewModel>
+@using TechMoveGLMS.Models
+
+@{
+    ViewData["Title"] = "Service Requests";
+}
+
+<div class="card">
+    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <h3 class="mb-0"><i class="fas fa-clipboard-list"></i> Service Requests</h3>
+        <a href="/ServiceRequests/Create" class="btn btn-light">
+            <i class="fas fa-plus"></i> New Request
+        </a>
+    </div>
+    <div class="card-body">
+        @if (!Model.Any())
+        {
+            <div class="alert alert-info text-center">
+                <i class="fas fa-info-circle"></i> No service requests found. Click "New Request" to create one.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Request Title</th>
+                            <th>Client</th>
+                            <th>Contract</th>
+                            <th>Amount (USD)</th>
+                            <th>Amount (ZAR)</th>
+                            <th>Exchange Rate</th>
+                            <th>Status</th>
+                            <th>Request Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var request in Model)
+                        {
+                            <tr>
+                                <td>@request.Title</td>
+                                <td>@request.ClientName</td>
+                                <td>@request.ContractTitle</td>
+                                <td>$@request.AmountUSD.ToString("N2")</td>
+                                <td>R@request.AmountZAR.ToString("N2")</td>
+                                <td>@request.ExchangeRate.ToString("F2")</td>
+                                <td>
+                                    <span class="status-badge status-@request.Status">
+                                        @request.Status
+                                    </span>
+                                </td>
+                                <td>@request.RequestDate.ToString("yyyy-MM-dd")</td>
+                                <td>
+                                    <a href="/ServiceRequests/Details/@request.Id" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
