@@ -3,16 +3,17 @@ using Microsoft.EntityFrameworkCore;
 using TechMoveGLMS.Data;
 using TechMoveGLMS.Models;
 using TechMoveGLMS.ViewModels;
+using TechMoveGLMS.Services;
 
 namespace TechMoveGLMS.Controllers
 {
     public class DriverSchedulesController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IApiService _apiService;
 
-        public DriverSchedulesController(ApplicationDbContext context)
+        public DriverSchedulesController(IApiService apiService)
         {
-            _context = context;
+            _apiService = apiService;
         }
 
         // ==========================================
@@ -20,30 +21,33 @@ namespace TechMoveGLMS.Controllers
         // ==========================================
         public async Task<IActionResult> Dashboard(string filter = "upcoming")
         {
-            var allSchedules = await _context.DriverSchedules
+            var allSchedules = await _apiService.GetDriverSchedulesAsync();
+            var sortedSchedules = allSchedules
                 .OrderBy(ds => ds.ScheduleDate)
                 .ThenBy(ds => ds.DepartureTime)
-                .ToListAsync();
+                .ToList();
 
             // Statistics
-            ViewBag.TodayTrips = allSchedules.Count(s => s.ScheduleDate.Date == DateTime.Today);
-            ViewBag.InProgressTrips = allSchedules.Count(s => s.Status == TripStatus.InProgress);
-            ViewBag.ScheduledTrips = allSchedules.Count(s => s.Status == TripStatus.Scheduled && s.ScheduleDate.Date >= DateTime.Today);
-            ViewBag.TotalDrivers = await _context.Drivers.CountAsync();
+            ViewBag.TodayTrips = sortedSchedules.Count(s => s.ScheduleDate.Date == DateTime.Today);
+            ViewBag.InProgressTrips = sortedSchedules.Count(s => s.Status == TripStatus.InProgress);
+            ViewBag.ScheduledTrips = sortedSchedules.Count(s => s.Status == TripStatus.Scheduled && s.ScheduleDate.Date >= DateTime.Today);
+            
+            var drivers = await _apiService.GetDriversAsync();
+            ViewBag.TotalDrivers = drivers.Count();
             ViewBag.CurrentFilter = filter;
 
             // Filter schedules based on selected tab
             if (filter == "inprogress")
             {
-                return View(allSchedules.Where(s => s.Status == TripStatus.InProgress).ToList());
+                return View(sortedSchedules.Where(s => s.Status == TripStatus.InProgress).ToList());
             }
             else if (filter == "all")
             {
-                return View(allSchedules.ToList());
+                return View(sortedSchedules);
             }
             else // upcoming
             {
-                return View(allSchedules.Where(s => s.ScheduleDate.Date >= DateTime.Today && s.Status != TripStatus.Completed).ToList());
+                return View(sortedSchedules.Where(s => s.ScheduleDate.Date >= DateTime.Today && s.Status != TripStatus.Completed).ToList());
             }
         }
 
@@ -52,10 +56,11 @@ namespace TechMoveGLMS.Controllers
         // ==========================================
         public async Task<IActionResult> Index()
         {
-            var schedules = await _context.DriverSchedules
+            var allSchedules = await _apiService.GetDriverSchedulesAsync();
+            var schedules = allSchedules
                 .OrderByDescending(ds => ds.ScheduleDate)
                 .ThenBy(ds => ds.DepartureTime)
-                .ToListAsync();
+                .ToList();
             return View(schedules);
         }
 
@@ -64,7 +69,7 @@ namespace TechMoveGLMS.Controllers
         // ==========================================
         public async Task<IActionResult> Details(int id)
         {
-            var schedule = await _context.DriverSchedules.FindAsync(id);
+            var schedule = await _apiService.GetDriverScheduleByIdAsync(id);
             if (schedule == null)
             {
                 return NotFound();
@@ -78,7 +83,7 @@ namespace TechMoveGLMS.Controllers
         public async Task<IActionResult> Create()
         {
             // Get existing drivers for auto-suggest
-            ViewBag.ExistingDrivers = await _context.Drivers.ToListAsync();
+            ViewBag.ExistingDrivers = await _apiService.GetDriversAsync();
             return View();
         }
 
@@ -104,14 +109,13 @@ namespace TechMoveGLMS.Controllers
                     CreatedAt = DateTime.UtcNow
                 };
 
-                _context.DriverSchedules.Add(schedule);
-                await _context.SaveChangesAsync();
+                await _apiService.CreateDriverScheduleAsync(schedule);
 
                 TempData["Success"] = $"Trip scheduled for {schedule.DriverName} on {schedule.ScheduleDate:yyyy-MM-dd}!";
                 return RedirectToAction(nameof(Dashboard));
             }
 
-            ViewBag.ExistingDrivers = await _context.Drivers.ToListAsync();
+            ViewBag.ExistingDrivers = await _apiService.GetDriversAsync();
             return View(model);
         }
 
@@ -122,14 +126,8 @@ namespace TechMoveGLMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int id, TripStatus status)
         {
-            var schedule = await _context.DriverSchedules.FindAsync(id);
-            if (schedule != null)
-            {
-                schedule.Status = status;
-                schedule.UpdatedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-                TempData["Success"] = $"Trip status updated to {status}";
-            }
+            await _apiService.UpdateDriverScheduleStatusAsync(id, status);
+            TempData["Success"] = $"Trip status updated to {status}";
             return RedirectToAction(nameof(Dashboard));
         }
 
@@ -140,13 +138,8 @@ namespace TechMoveGLMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var schedule = await _context.DriverSchedules.FindAsync(id);
-            if (schedule != null)
-            {
-                _context.DriverSchedules.Remove(schedule);
-                await _context.SaveChangesAsync();
-                TempData["Success"] = "Schedule deleted successfully!";
-            }
+            await _apiService.DeleteDriverScheduleAsync(id);
+            TempData["Success"] = "Schedule deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
     }

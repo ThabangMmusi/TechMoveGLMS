@@ -58,5 +58,26 @@ namespace TechMoveGLMS.API.Controllers
 
             return CreatedAtAction("GetServiceRequest", new { id = serviceRequest.Id }, serviceRequest);
         }
+
+        // PATCH: api/servicerequests/5/status
+        [HttpPatch("{id}/status")]
+        public async Task<IActionResult> UpdateStatus(int id, [FromBody] RequestStatus status)
+        {
+            var request = await _context.ServiceRequests.FindAsync(id);
+            if (request == null)
+            {
+                return NotFound();
+            }
+
+            request.Status = status;
+            if (status == RequestStatus.Completed)
+            {
+                request.CompletedDate = DateTime.UtcNow;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }

@@ -26,6 +26,11 @@ builder.Services.AddScoped<ICurrencyService, CurrencyService>();
 builder.Services.AddScoped<IFileValidationService, FileValidationService>();
 builder.Services.AddHttpClient<ICurrencyService, CurrencyService>();
 
+// Register API Service
+builder.Services.AddHttpClient<IApiService, ApiService>(client => {
+    client.BaseAddress = new Uri(builder.Configuration["ApiSettings:BaseUrl"] ?? "http://localhost:5001/api/");
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

@@ -2,27 +2,26 @@
 using Microsoft.EntityFrameworkCore;
 using TechMoveGLMS.Data;
 using TechMoveGLMS.Models;
+using TechMoveGLMS.Services;
 
 namespace TechMoveGLMS.Controllers
 {
     public class InvoicesController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IApiService _apiService;
 
-        public InvoicesController(ApplicationDbContext context)
+        public InvoicesController(IApiService apiService)
         {
-            _context = context;
+            _apiService = apiService;
         }
 
         // GET: Invoices
         public async Task<IActionResult> Index()
         {
-            var invoices = await _context.Invoices
-                .Include(i => i.ServiceRequest)
-                .ThenInclude(sr => sr.Contract)
-                .ThenInclude(c => c.Client)
+            var allInvoices = await _apiService.GetInvoicesAsync();
+            var invoices = allInvoices
                 .OrderByDescending(i => i.InvoiceDate)
-                .ToListAsync();
+                .ToList();
 
             // Statistics
             ViewBag.TotalInvoices = invoices.Count;
@@ -36,11 +35,7 @@ namespace TechMoveGLMS.Controllers
         // GET: Invoices/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var invoice = await _context.Invoices
-                .Include(i => i.ServiceRequest)
-                .ThenInclude(sr => sr.Contract)
-                .ThenInclude(c => c.Client)
-                .FirstOrDefaultAsync(i => i.Id == id);
+            var invoice = await _apiService.GetInvoiceByIdAsync(id);
 
             if (invoice == null)
             {
@@ -53,9 +48,7 @@ namespace TechMoveGLMS.Controllers
         // GET: Invoices/Create/5
         public async Task<IActionResult> Create(int serviceRequestId)
         {
-            var serviceRequest = await _context.ServiceRequests
-                .Include(sr => sr.Contract)
-                .FirstOrDefaultAsync(sr => sr.Id == serviceRequestId);
+            var serviceRequest = await _apiService.GetServiceRequestByIdAsync(serviceRequestId);
 
             if (serviceRequest == null)
             {
@@ -64,8 +57,8 @@ namespace TechMoveGLMS.Controllers
             }
 
             // Check if invoice already exists
-            var existingInvoice = await _context.Invoices
-                .FirstOrDefaultAsync(i => i.ServiceRequestId == serviceRequestId);
+            var invoices = await _apiService.GetInvoicesAsync();
+            var existingInvoice = invoices.FirstOrDefault(i => i.ServiceRequestId == serviceRequestId);
 
             if (existingInvoice != null)
             {
@@ -82,8 +75,7 @@ namespace TechMoveGLMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(int serviceRequestId, DateTime invoiceDate, DateTime dueDate, string? notes)
         {
-            var serviceRequest = await _context.ServiceRequests
-                .FirstOrDefaultAsync(sr => sr.Id == serviceRequestId);
+            var serviceRequest = await _apiService.GetServiceRequestByIdAsync(serviceRequestId);
 
             if (serviceRequest == null)
             {
@@ -91,14 +83,9 @@ namespace TechMoveGLMS.Controllers
                 return RedirectToAction("Index", "ServiceRequests");
             }
 
-            // Generate invoice number
-            var invoiceCount = await _context.Invoices.CountAsync();
-            var invoiceNumber = $"INV-{DateTime.Now.Year}-{(invoiceCount + 1):D4}";
-
             var invoice = new Invoice
             {
                 ServiceRequestId = serviceRequestId,
-                InvoiceNumber = invoiceNumber,
                 AmountUSD = serviceRequest.AmountUSD,
                 AmountZAR = serviceRequest.AmountZAR,
                 ExchangeRate = serviceRequest.ExchangeRate,
@@ -109,11 +96,10 @@ namespace TechMoveGLMS.Controllers
                 CreatedAt = DateTime.UtcNow
             };
 
-            _context.Invoices.Add(invoice);
-            await _context.SaveChangesAsync();
+            var createdInvoice = await _apiService.CreateInvoiceAsync(invoice);
 
-            TempData["Success"] = $"Invoice {invoiceNumber} created successfully!";
-            return RedirectToAction(nameof(Details), new { id = invoice.Id });
+            TempData["Success"] = $"Invoice {createdInvoice.InvoiceNumber} created successfully!";
+            return RedirectToAction(nameof(Details), new { id = createdInvoice.Id });
         }
 
         // POST: Invoices/UpdateStatus
@@ -121,20 +107,8 @@ namespace TechMoveGLMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int id, InvoiceStatus status)
         {
-            var invoice = await _context.Invoices.FindAsync(id);
-            if (invoice == null)
-            {
-                return NotFound();
-            }
-
-            invoice.Status = status;
-            if (status == InvoiceStatus.Paid)
-            {
-                invoice.PaidDate = DateTime.Now;
-            }
-
-            await _context.SaveChangesAsync();
-            TempData["Success"] = $"Invoice {invoice.InvoiceNumber} status updated to {status}";
+            await _apiService.UpdateInvoiceStatusAsync(id, status);
+            TempData["Success"] = $"Invoice status updated to {status}";
 
             return RedirectToAction(nameof(Details), new { id });
         }
@@ -144,17 +118,9 @@ namespace TechMoveGLMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> MarkAsPaid(int id)
         {
-            var invoice = await _context.Invoices.FindAsync(id);
-            if (invoice == null)
-            {
-                return NotFound();
-            }
+            await _apiService.UpdateInvoiceStatusAsync(id, InvoiceStatus.Paid);
 
-            invoice.Status = InvoiceStatus.Paid;
-            invoice.PaidDate = DateTime.Now;
-            await _context.SaveChangesAsync();
-
-            TempData["Success"] = $"Invoice {invoice.InvoiceNumber} marked as paid!";
+            TempData["Success"] = $"Invoice marked as paid!";
             return RedirectToAction(nameof(Details), new { id });
         }
     }

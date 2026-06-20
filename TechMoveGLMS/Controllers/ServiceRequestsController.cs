@@ -9,16 +9,16 @@ namespace TechMoveGLMS.Controllers
 {
     public class ServiceRequestsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IApiService _apiService;
         private readonly ICurrencyService _currencyService;
         private readonly ILogger<ServiceRequestsController> _logger;
 
         public ServiceRequestsController(
-            ApplicationDbContext context,
+            IApiService apiService,
             ICurrencyService currencyService,
             ILogger<ServiceRequestsController> logger)
         {
-            _context = context;
+            _apiService = apiService;
             _currencyService = currencyService;
             _logger = logger;
         }
@@ -26,9 +26,8 @@ namespace TechMoveGLMS.Controllers
         // GET: ServiceRequests
         public async Task<IActionResult> Index()
         {
-            var requests = await _context.ServiceRequests
-                .Include(sr => sr.Contract)
-                .ThenInclude(c => c!.Client)
+            var allRequests = await _apiService.GetServiceRequestsAsync();
+            var requests = allRequests
                 .OrderByDescending(sr => sr.RequestDate)
                 .Select(sr => new ServiceRequestViewModel
                 {
@@ -45,7 +44,7 @@ namespace TechMoveGLMS.Controllers
                     ClientName = sr.Contract != null && sr.Contract.Client != null ? sr.Contract.Client.Name : "N/A",
                     ContractId = sr.ContractId
                 })
-                .ToListAsync();
+                .ToList();
 
             return View(requests);
         }
@@ -54,10 +53,10 @@ namespace TechMoveGLMS.Controllers
         public async Task<IActionResult> Create()
         {
             // Only show active contracts for service requests
-            var activeContracts = await _context.Contracts
-                .Include(c => c.Client)
+            var contracts = await _apiService.GetContractsAsync();
+            var activeContracts = contracts
                 .Where(c => c.Status == ContractStatus.Active)
-                .ToListAsync();
+                .ToList();
 
             if (!activeContracts.Any())
             {
@@ -76,15 +75,13 @@ namespace TechMoveGLMS.Controllers
         public async Task<IActionResult> Create(CreateServiceRequestViewModel model)
         {
             // Validate contract exists and is active
-            var contract = await _context.Contracts.FindAsync(model.ContractId);
+            var contract = await _apiService.GetContractByIdAsync(model.ContractId);
 
             if (contract == null)
             {
                 ModelState.AddModelError("ContractId", "Invalid contract selected");
-                ViewBag.Contracts = await _context.Contracts
-                    .Include(c => c.Client)
-                    .Where(c => c.Status == ContractStatus.Active)
-                    .ToListAsync();
+                var contracts = await _apiService.GetContractsAsync();
+                ViewBag.Contracts = contracts.Where(c => c.Status == ContractStatus.Active).ToList();
                 return View(model);
             }
 
@@ -92,53 +89,52 @@ namespace TechMoveGLMS.Controllers
             if (contract.Status != ContractStatus.Active)
             {
                 ModelState.AddModelError("", "Service requests can only be created for ACTIVE contracts");
-                ViewBag.Contracts = await _context.Contracts
-                    .Include(c => c.Client)
-                    .Where(c => c.Status == ContractStatus.Active)
-                    .ToListAsync();
+                var contracts = await _apiService.GetContractsAsync();
+                ViewBag.Contracts = contracts.Where(c => c.Status == ContractStatus.Active).ToList();
                 return View(model);
             }
 
             if (ModelState.IsValid)
             {
-                // Get current exchange rate
-                var rate = await _currencyService.GetExchangeRateAsync("USD", "ZAR");
-
-                var serviceRequest = new ServiceRequest
+                try
                 {
-                    ContractId = model.ContractId,
-                    Title = model.Title,
-                    Description = model.Description,
-                    AmountUSD = model.AmountUSD,
-                    ExchangeRate = rate,
-                    AmountZAR = model.AmountUSD * rate,
-                    RequestDate = DateTime.UtcNow,
-                    Status = RequestStatus.Pending
-                };
+                    // Get current exchange rate
+                    var rate = await _currencyService.GetExchangeRateAsync("USD", "ZAR");
 
-                _context.ServiceRequests.Add(serviceRequest);
-                await _context.SaveChangesAsync();
+                    var serviceRequest = new ServiceRequest
+                    {
+                        ContractId = model.ContractId,
+                        Title = model.Title,
+                        Description = model.Description,
+                        AmountUSD = model.AmountUSD,
+                        ExchangeRate = rate,
+                        AmountZAR = model.AmountUSD * rate,
+                        RequestDate = DateTime.UtcNow,
+                        Status = RequestStatus.Pending
+                    };
 
-                _logger.LogInformation($"Service request created: {serviceRequest.Title} for contract {contract.Title}");
+                    await _apiService.CreateServiceRequestAsync(serviceRequest);
 
-                TempData["Success"] = $"Service request created! Amount: {model.AmountUSD:C} USD = {serviceRequest.AmountZAR:C} ZAR (Rate: {rate:F2})";
-                return RedirectToAction(nameof(Index));
+                    _logger.LogInformation($"Service request created: {serviceRequest.Title} for contract {contract.Title}");
+
+                    TempData["Success"] = $"Service request created! Amount: {model.AmountUSD:C} USD = {serviceRequest.AmountZAR:C} ZAR (Rate: {rate:F2})";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", $"API Error: {ex.Message}");
+                }
             }
 
-            ViewBag.Contracts = await _context.Contracts
-                .Include(c => c.Client)
-                .Where(c => c.Status == ContractStatus.Active)
-                .ToListAsync();
+            var allContracts = await _apiService.GetContractsAsync();
+            ViewBag.Contracts = allContracts.Where(c => c.Status == ContractStatus.Active).ToList();
             return View(model);
         }
 
         // GET: ServiceRequests/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var request = await _context.ServiceRequests
-                .Include(sr => sr.Contract)
-                .ThenInclude(c => c!.Client)
-                .FirstOrDefaultAsync(sr => sr.Id == id);
+            var request = await _apiService.GetServiceRequestByIdAsync(id);
 
             if (request == null)
                 return NotFound();
@@ -159,16 +155,7 @@ namespace TechMoveGLMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int id, RequestStatus status)
         {
-            var request = await _context.ServiceRequests.FindAsync(id);
-            if (request == null)
-                return NotFound();
-
-            request.Status = status;
-
-            if (status == RequestStatus.Completed)
-                request.CompletedDate = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
+            await _apiService.UpdateServiceRequestStatusAsync(id, status);
 
             TempData["Success"] = $"Request status updated to {status}";
             return RedirectToAction(nameof(Details), new { id });

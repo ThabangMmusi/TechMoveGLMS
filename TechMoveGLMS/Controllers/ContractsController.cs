@@ -9,18 +9,18 @@ namespace TechMoveGLMS.Controllers
 {
     public class ContractsController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IApiService _apiService;
         private readonly IFileValidationService _fileValidationService;
         private readonly IWebHostEnvironment _webHostEnvironment;
         private readonly ILogger<ContractsController> _logger;
 
         public ContractsController(
-            ApplicationDbContext context,
+            IApiService apiService,
             IFileValidationService fileValidationService,
             IWebHostEnvironment webHostEnvironment,
             ILogger<ContractsController> logger)
         {
-            _context = context;
+            _apiService = apiService;
             _fileValidationService = fileValidationService;
             _webHostEnvironment = webHostEnvironment;
             _logger = logger;
@@ -29,31 +29,18 @@ namespace TechMoveGLMS.Controllers
         // GET: Contracts - Index with filtering
         public async Task<IActionResult> Index(ContractSearchViewModel search)
         {
-            var query = _context.Contracts
-                .Include(c => c.Client)
-                .AsQueryable();
+            var allContracts = await _apiService.GetContractsAsync(
+                search.StartDateFrom, 
+                search.StartDateTo, 
+                search.Status);
 
-            // Apply LINQ-based filters
-            if (search.StartDateFrom.HasValue)
-                query = query.Where(c => c.StartDate >= search.StartDateFrom.Value);
-
-            if (search.StartDateTo.HasValue)
-                query = query.Where(c => c.StartDate <= search.StartDateTo.Value);
-
-            if (search.EndDateFrom.HasValue)
-                query = query.Where(c => c.EndDate >= search.EndDateFrom.Value);
-
-            if (search.EndDateTo.HasValue)
-                query = query.Where(c => c.EndDate <= search.EndDateTo.Value);
-
-            if (search.Status.HasValue)
-                query = query.Where(c => c.Status == search.Status.Value);
-
+            // Additional client filtering if needed (API should ideally handle this)
             if (search.ClientId.HasValue && search.ClientId.Value > 0)
-                query = query.Where(c => c.ClientId == search.ClientId.Value);
+            {
+                allContracts = allContracts.Where(c => c.ClientId == search.ClientId.Value);
+            }
 
-            // Order by CreatedAt descending (newest first)
-            var contracts = await query
+            var contracts = allContracts
                 .OrderByDescending(c => c.CreatedAt)
                 .Select(c => new ContractViewModel
                 {
@@ -70,9 +57,9 @@ namespace TechMoveGLMS.Controllers
                     Description = c.Description,
                     SignedAgreementFileName = c.SignedAgreementFileName
                 })
-                .ToListAsync();
+                .ToList();
 
-            ViewBag.Clients = await _context.Clients.ToListAsync();
+            ViewBag.Clients = await _apiService.GetClientsAsync();
             ViewBag.StatusList = Enum.GetValues(typeof(ContractStatus));
             ViewBag.SearchModel = search;
 
@@ -82,10 +69,7 @@ namespace TechMoveGLMS.Controllers
         // GET: Contracts/Details/5
         public async Task<IActionResult> Details(int id)
         {
-            var contract = await _context.Contracts
-                .Include(c => c.Client)
-                .Include(c => c.ServiceRequests)
-                .FirstOrDefaultAsync(c => c.Id == id);
+            var contract = await _apiService.GetContractByIdAsync(id);
 
             if (contract == null)
                 return NotFound();
@@ -111,8 +95,8 @@ namespace TechMoveGLMS.Controllers
                 string? fileName = null;
 
                 // Check if client already exists
-                var existingClient = await _context.Clients
-                    .FirstOrDefaultAsync(c => c.Name == model.ClientName);
+                var clients = await _apiService.GetClientsAsync();
+                var existingClient = clients.FirstOrDefault(c => c.Name == model.ClientName);
 
                 Client client;
 
@@ -133,8 +117,7 @@ namespace TechMoveGLMS.Controllers
                         Region = model.ClientRegion,
                         CreatedAt = DateTime.UtcNow
                     };
-                    _context.Clients.Add(client);
-                    await _context.SaveChangesAsync();
+                    client = await _apiService.CreateClientAsync(client);
                     TempData["Success"] = $"New client '{client.Name}' created!";
                 }
 
@@ -182,8 +165,7 @@ namespace TechMoveGLMS.Controllers
                     CreatedAt = DateTime.UtcNow
                 };
 
-                _context.Contracts.Add(contract);
-                await _context.SaveChangesAsync();
+                await _apiService.CreateContractAsync(contract);
 
                 TempData["Success"] = $"Contract '{contract.Title}' created successfully for client '{client.Name}'!";
                 return RedirectToAction(nameof(Index));
@@ -196,7 +178,7 @@ namespace TechMoveGLMS.Controllers
         // GET: Contracts/DownloadFile/5
         public async Task<IActionResult> DownloadFile(int id)
         {
-            var contract = await _context.Contracts.FindAsync(id);
+            var contract = await _apiService.GetContractByIdAsync(id);
 
             if (contract?.SignedAgreementPath == null || !System.IO.File.Exists(contract.SignedAgreementPath))
             {
@@ -215,12 +197,7 @@ namespace TechMoveGLMS.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateStatus(int id, ContractStatus status)
         {
-            var contract = await _context.Contracts.FindAsync(id);
-            if (contract == null)
-                return NotFound();
-
-            contract.Status = status;
-            await _context.SaveChangesAsync();
+            await _apiService.UpdateContractStatusAsync(id, status);
 
             TempData["Success"] = $"Contract status updated to {status}";
             return RedirectToAction(nameof(Details), new { id });
