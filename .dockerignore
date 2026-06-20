@@ -1,0 +1,14 @@
+**/.git
+**/bin
+**/obj
+**/out
+**/.vs
+**/.vscode
+**/wwwroot/uploads
+TechMoveGLMS/TechMove.db
+TechMoveGLMS/TechMove.db-shm
+TechMoveGLMS/TechMove.db-wal
+docker-compose.yml
+Dockerfile
+RUN_GUIDE.md
+instrcutions.md
