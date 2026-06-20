@@ -43,3 +43,23 @@ dotnet run --urls "http://localhost:5000"
 ## Troubleshooting
 * **Database**: Ensure `TechMove.db` exists in the `TechMoveGLMS/` directory. The API is configured to look for it at `../TechMoveGLMS/TechMove.db`.
 * **Ports**: If ports 5000 or 5001 are in use, you can change the `--urls` parameter in the run command.
+
+## 3. Running Unit Tests
+To run the automated test suite and verify the business logic:
+```bash
+cd TechMoveGLMS.Tests
+dotnet test
+```
+The test suite covers:
+* **Currency Conversion**: Validates API integration and fallback logic.
+* **File Validation**: Ensures only valid PDFs under 10MB are accepted.
+* **Business Rules**: Verifies that service requests are blocked for Expired or On-Hold contracts.
+
+## 4. Running with Docker
+If you have Docker installed, you can run the entire ecosystem (Database, API, and Web App) using:
+```bash
+docker-compose up --build
+```
+* **Web App**: http://localhost:5000
+* **Web API**: http://localhost:5001
+* **SQL Server**: Running as a container dependency (for production-like setup).

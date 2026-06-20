@@ -1,0 +1,31 @@
+version: '3.4'
+
+services:
+  glms-backend-api:
+    image: glms-backend-api
+    build:
+      context: .
+      dockerfile: TechMoveGLMS.API/Dockerfile
+    ports:
+      - "5001:8080"
+    volumes:
+      - db-data:/app/data
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/TechMove.db
+
+  glms-frontend-web:
+    image: glms-frontend-web
+    build:
+      context: .
+      dockerfile: TechMoveGLMS/Dockerfile
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ApiSettings__BaseUrl=http://glms-backend-api:8080/api/
+    depends_on:
+      - glms-backend-api
+
+volumes:
+  db-data:
