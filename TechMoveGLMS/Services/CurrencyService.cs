@@ -53,6 +53,7 @@ namespace TechMoveGLMS.Services
 
     public class ExchangeRateResponse
     {
+        [System.Text.Json.Serialization.JsonPropertyName("rates")]
         public Dictionary<string, decimal>? Rates { get; set; }
     }
 }

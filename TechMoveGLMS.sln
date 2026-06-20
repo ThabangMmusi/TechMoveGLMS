@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TechMoveGLMS", "TechMoveGLM
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TechMoveGLMS.API", "TechMoveGLMS.API\TechMoveGLMS.API.csproj", "{AE800456-5F12-473F-B959-CBFEABDB41DF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TechMoveGLMS.Tests", "TechMoveGLMS.Tests\TechMoveGLMS.Tests.csproj", "{5ED6EB9D-903B-413B-9F62-1B0E655843E2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +26,9 @@ Global
 		{AE800456-5F12-473F-B959-CBFEABDB41DF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AE800456-5F12-473F-B959-CBFEABDB41DF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AE800456-5F12-473F-B959-CBFEABDB41DF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5ED6EB9D-903B-413B-9F62-1B0E655843E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5ED6EB9D-903B-413B-9F62-1B0E655843E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5ED6EB9D-903B-413B-9F62-1B0E655843E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5ED6EB9D-903B-413B-9F62-1B0E655843E2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
