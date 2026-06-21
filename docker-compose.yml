@@ -1,5 +1,3 @@
-version: '3.4'
-
 services:
   glms-backend-api:
     image: glms-backend-api
