@@ -1,4 +1,4 @@
-﻿@model TechMoveGLMS.ViewModels.CreateServiceRequestViewModel
+@model TechMoveGLMS.ViewModels.CreateServiceRequestViewModel
 @using TechMoveGLMS.Models
 
 @{
@@ -19,10 +19,10 @@
                     <label asp-for="ContractId" class="form-label">Select Contract *</label>
                     <select asp-for="ContractId" class="form-select" id="contractSelect">
                         <option value="">-- Select Active Contract --</option>
-                        @foreach (var contract in ViewBag.Contracts)
+                        @foreach (Contract contract in ViewBag.Contracts)
                         {
                             <option value="@contract.Id">
-                                @contract.Title - @contract.Client.Name (Valid until: @contract.EndDate.ToString("yyyy-MM-dd"))
+                                @contract.Title - @(contract.Client?.Name ?? "No Client") (Valid until: @contract.EndDate.ToString("yyyy-MM-dd"))
                             </option>
                         }
                     </select>

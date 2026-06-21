@@ -1,4 +1,4 @@
-﻿@model IEnumerable<TechMoveGLMS.ViewModels.ContractViewModel>
+@model IEnumerable<TechMoveGLMS.ViewModels.ContractViewModel>
 @using TechMoveGLMS.Models
 @{
     ViewData["Title"] = "Contract Management";
@@ -44,7 +44,7 @@
                     <label class="form-label small text-muted">Client</label>
                     <select name="ClientId" class="form-select form-select-sm rounded-3">
                         <option value="">All Clients</option>
-                        @foreach (var client in ViewBag.Clients)
+                        @foreach (Client client in ViewBag.Clients)
                         {
                             <option value="@client.Id" selected="@(searchModel?.ClientId == client.Id)">@client.Name</option>
                         }

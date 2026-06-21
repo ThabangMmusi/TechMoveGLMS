@@ -20,7 +20,7 @@ namespace TechMoveGLMS.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Contract>>> GetContracts(DateTime? startDate, DateTime? endDate, ContractStatus? status)
         {
-            var query = _context.Contracts.AsQueryable();
+            var query = _context.Contracts.Include(c => c.Client).AsQueryable();
 
             if (startDate.HasValue)
                 query = query.Where(c => c.StartDate >= startDate.Value);

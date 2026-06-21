@@ -26,6 +26,13 @@ builder.Services.AddHttpClient<ICurrencyService, CurrencyService>();
 
 var app = builder.Build();
 
+// Ensure the database is created with all tables (runs on first boot in Docker)
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    db.Database.EnsureCreated();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
