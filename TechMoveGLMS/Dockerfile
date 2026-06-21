@@ -1,13 +1,14 @@
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG TARGETARCH
 WORKDIR /src
 COPY ["TechMoveGLMS/TechMoveGLMS.csproj", "TechMoveGLMS/"]
-RUN dotnet restore "TechMoveGLMS/TechMoveGLMS.csproj"
+RUN dotnet restore "TechMoveGLMS/TechMoveGLMS.csproj" -a $TARGETARCH
 COPY . .
 WORKDIR "/src/TechMoveGLMS"
-RUN dotnet build "TechMoveGLMS.csproj" -c Release -o /app/build
+RUN dotnet build "TechMoveGLMS.csproj" -c Release -o /app/build -a $TARGETARCH
 
 FROM build AS publish
-RUN dotnet publish "TechMoveGLMS.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "TechMoveGLMS.csproj" -c Release -o /app/publish /p:UseAppHost=false -a $TARGETARCH
 
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
