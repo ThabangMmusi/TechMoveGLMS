@@ -1,4 +1,4 @@
-FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY ["TechMoveGLMS/TechMoveGLMS.csproj", "TechMoveGLMS/"]
 RUN dotnet restore "TechMoveGLMS/TechMoveGLMS.csproj"
@@ -9,7 +9,7 @@ RUN dotnet build "TechMoveGLMS.csproj" -c Release -o /app/build
 FROM build AS publish
 RUN dotnet publish "TechMoveGLMS.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-FROM --platform=linux/amd64 mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 8080
 COPY --from=publish /app/publish .
